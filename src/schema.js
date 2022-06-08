@@ -1,6 +1,7 @@
+
 const { Sequelize, DataTypes } = require('sequelize')
-const database = 'url'
-const sequelize = new Sequelize(`mysql://root:123456@localhost:3306/${database}`)
+console.log(process.env.DB_URL)
+const sequelize = new Sequelize(process.env.DB_URL)
 const defineSchema = async () => {
     const URLModel = sequelize.define('URL', {
         shorten: {

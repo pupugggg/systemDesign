@@ -1,3 +1,4 @@
+require('dotenv').config()
 const { urlencoded, json } = require('express')
 const express = require('express')
 const {defineSchema} = require('./src/schema')
