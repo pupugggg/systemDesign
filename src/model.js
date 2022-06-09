@@ -24,8 +24,7 @@ const storeShortenURL = async (shorten, origin) => {
 }
 const getOriginFromDB = async (shorten) => {
     const shardIndex = assignShard(shorten)
-    const replicaIndex = Math.floor(Math.random() * replicaPerShard)
-    let sequelize = READPOOL.get(DB_URLs[shardIndex]+'-'+replicaIndex)
+    let sequelize = SHARD_POOL[shardIndex]
     const target = await sequelize.URLModel.findOne({
         where: { shorten: shorten },
     })

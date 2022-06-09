@@ -2,34 +2,33 @@ const { Sequelize, DataTypes } = require('sequelize')
 const DB_URLs = process.env.SHARD_POOL.split(',')
 const replicaPerShard = parseInt(process.env.REPLICA_PER_SHARD)
 const SHARD_POOL = []
-const READPOOL = new Map()
 
 for (let i = 0; i < DB_URLs.length; i++) {
-    const connectionString =
-        'mysql://' +
-        process.env.DB_CREDENTIAL +
-        '@' +
-        DB_URLs[i] +
-        process.env.SHARD_URL
+    const connectionString = DB_URLs[i] + process.env.SHARD_URL
+    const replicas = []
+
+    for (let j = 0; j < replicaPerShard; j++) {
+        replicas.push({
+            host: DB_URLs[i] + '-' + j.toString() + process.env.SHARD_URL,
+            username: process.env.user,
+            password: process.env.password,
+        })
+    }
     SHARD_POOL.push(
-        new Sequelize(connectionString, {
+        new Sequelize('url', null, null, {
+            dialect: 'mysql',
+            port: 3306,
+            replication: {
+                read: replicas,
+                write: {
+                    host: connectionString,
+                    username: process.env.user,
+                    password: process.env.password,
+                },
+            },
             define: { charset: 'utf8', collate: 'utf8_bin' },
         })
     )
-    for (let j = 0; j < replicaPerShard ; j++) {
-        const shardString =
-            'mysql://' +
-            process.env.DB_CREDENTIAL +
-            '@' +
-            DB_URLs[i] +
-            '-' +
-            j.toString() +
-            process.env.SHARD_URL
-        READPOOL.set(
-            DB_URLs[i] + '-' + j.toString(),
-            new Sequelize(shardString)
-        )
-    }
 }
 
 const defineSchema = async () => {
@@ -51,34 +50,12 @@ const defineSchema = async () => {
         )
         SHARD_POOL[i].URLModel = URLModel
         await SHARD_POOL[i].sync({ force: true })
-        for (let j = 0; j < replicaPerShard ; j++) {
-            const instance = READPOOL.get(DB_URLs[i] + '-' + j.toString())
-            const RepModel = instance.define(
-                'URL',
-                {
-                    shorten: {
-                        type: DataTypes.STRING(7),
-                        allowNull: false,
-                        unique: true,
-                    },
-                    origin: {
-                        type: DataTypes.STRING,
-                        allowNull: false,
-                    },
-                },
-                { timestamps: false }
-            )
-            instance.URLModel = RepModel
-            READPOOL.set(DB_URLs[i] + '-' + j.toString(),instance)
-            await instance.sync({})
-        }
     }
 }
 
 module.exports = {
     defineSchema,
     SHARD_POOL,
-    READPOOL,
     DB_URLs,
     replicaPerShard,
 }
