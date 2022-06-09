@@ -1,10 +1,11 @@
 config:
-  target: ""
-  #http:
-    #pool: 10
+  target: "http://35.78.121.167:3000"
+  http:
+    pool: 10
+    timeout: 20
   phases:
     - duration: 20
-      arrivalRate: 500
+      arrivalRate: 1000
       name: start
 
 scenarios:

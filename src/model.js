@@ -1,5 +1,4 @@
-const { SHARD_POOL } = require('./schema')
-
+const { SHARD_POOL,READPOOL, DB_URLs,replicaPerShard } = require('./schema')
 const assignShard = (shorten) => {
     const SHARD_AMOUNT = SHARD_POOL.length
     let sum = 0
@@ -24,7 +23,9 @@ const storeShortenURL = async (shorten, origin) => {
     return result.shorten
 }
 const getOriginFromDB = async (shorten) => {
-    let sequelize = SHARD_POOL[assignShard(shorten)]
+    const shardIndex = assignShard(shorten)
+    const replicaIndex = Math.floor(Math.random() * replicaPerShard)
+    let sequelize = READPOOL.get(DB_URLs[shardIndex]+'-'+replicaIndex)
     const target = await sequelize.URLModel.findOne({
         where: { shorten: shorten },
     })
