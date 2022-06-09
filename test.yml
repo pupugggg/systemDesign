@@ -1,0 +1,18 @@
+config:
+  target: ""
+  #http:
+    #pool: 10
+  phases:
+    - duration: 20
+      arrivalRate: 500
+      name: start
+
+scenarios:
+  - name: "write"
+    flow:
+      - post:
+          url: "/shorten"
+          headers:
+           Content-Type: "application/json"
+          json:
+            originUrl: 'http://{{ $randomString() }}'
